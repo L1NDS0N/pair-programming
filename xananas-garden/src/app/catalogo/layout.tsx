@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar/index.tsx";
+import Sidebar from "@/components/Sidebar";
 
 export const metadata = {
   title: "Create Next App",
