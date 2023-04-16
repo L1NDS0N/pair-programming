@@ -17,7 +17,7 @@ export default function Content({ category }: ICategory) {
       </Head>
 
       <div className="m-8">
-        <h1 className="font-bold text-xl">Rosas do deserto</h1>
+        <h1 className="font-bold text-xl">{category}</h1>
       </div>
 
       <div className="grid lg:grid-cols-2 md:grid-cols-1 gap-4 m-4 overflow-y">
@@ -30,16 +30,13 @@ export default function Content({ category }: ICategory) {
               href="#"
               className="group border border-zinc-200 rounded hover:shadow-lg"
             >
-              {/* // terminei aqui */}
-              <div className="flex md:flex-row max-h-56">
-                
+              <div className="flex md:flex-row xs:flex-col md:items-start xs:items-center">
                 <img
-                  className="group-hover:shadow-xl"
-                  width={200}
+                  className="group-hover:shadow-xl md:w-40 md:aspect-[3/4] xs:w-52"
                   src={data.image.url}
                   alt={data.image.alt}
                 />
-                <div className="m-4 overflow-auto">
+                <div className="m-4">
                   <h1 className="font-bold text-xl">{data.nome}</h1>
                   <h2 className="font-thin">{data.descricao}</h2>
                   <div className="p-2 flex justify-between">
@@ -52,7 +49,7 @@ export default function Content({ category }: ICategory) {
                     <a
                       href="#"
                       title="Solicitar via whatsapp"
-                      className="invisible group-hover:visible rounded-full hover:bg-green-400/50 h-8 w-8 flex items-center"
+                      className="invisible group-hover:visible rounded-full hover:bg-green-400/50 h-8 w-8 flex items-center justify-center"
                     >
                       <div className="text-green-600">
                         <WhatsappLogo size={30} />
