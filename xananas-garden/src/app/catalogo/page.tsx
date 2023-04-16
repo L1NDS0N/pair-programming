@@ -1,6 +1,7 @@
+import Content from "@/components/Content";
 
 export default function Catalogo() {
     return (
-        <>Catalogo</>
+        <Content category="tudo"/>
     )
 }

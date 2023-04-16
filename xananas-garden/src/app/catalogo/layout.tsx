@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import React, { ReactPropTypes } from "react";
 
 export const metadata = {
   title: "Create Next App",
@@ -12,9 +13,9 @@ export default function CatalogoLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div>
+    <div >
       <Header />
-      <div className="flex">
+      <div className="flex h-full">
         <Sidebar />
         {children}
       </div>
