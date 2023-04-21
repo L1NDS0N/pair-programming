@@ -1,7 +1,5 @@
-import Content from "@/components/Content";
+import Content from '@/components/Content';
 
 export default function Catalogo() {
-    return (
-        <Content category="Rosas do deserto"/>
-    )
+	return <Content category='Rosas do deserto' />;
 }

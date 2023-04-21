@@ -5,7 +5,7 @@ import { XButton } from '@/components/XButton';
 
 export default function Login() {
 	return (
-		<div>
+		<>
 			<Head>
 				<title>Login - Autentique-se no sistema</title>
 			</Head>
@@ -21,13 +21,13 @@ export default function Login() {
 						<form className='flex flex-col gap-2 w-full'>
 							<input
 								autoFocus
-                                required
+								required
 								type='text'
 								placeholder='Usuário'
 								className='p-2 h-10 rounded border border-zinc-200'
 							/>
 							<input
-                                required
+								required
 								type='password'
 								placeholder='Senha'
 								className='p-2 h-10 rounded border border-zinc-200'
@@ -41,6 +41,6 @@ export default function Login() {
 					</div>
 				</section>
 			</main>
-		</div>
+		</>
 	);
 }
