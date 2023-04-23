@@ -1,35 +1,15 @@
 'use client';
 import Head from 'next/head';
+import { WhatsappLogo } from 'phosphor-react';
+import { DADOS } from '../../faker/catalogo-fake';
 
 interface ICategory {
 	category: string;
 }
-import { DADOS } from '../../faker/catalogo-fake';
-import { WhatsappLogo } from 'phosphor-react';
-import { useEffect } from 'react';
-import {  useRouter } from 'next/navigation';
 
 export default function Content({ category }: ICategory) {
 	const content = DADOS;
-	const { push } = useRouter();
-	useEffect(() => {
-		const handleLoginShortcut = (event: KeyboardEvent) => {
-			if (
-				event.ctrlKey &&
-				event.altKey &&
-				event.shiftKey &&
-				event.key === 'L'
-			) {
-				push('/admin/login');
-			}
-		};
-
-		document.addEventListener('keydown', handleLoginShortcut);
-
-		return () => {
-			document.removeEventListener('keydown', handleLoginShortcut);
-		};
-	}, []);
+	
 	return (
 		<>
 			<Head>
@@ -42,7 +22,7 @@ export default function Content({ category }: ICategory) {
 
 				<div className='grid lg:grid-cols-2 md:grid-cols-1 gap-4 m-4 overflow-y'>
 					{content.map(data => (
-						<div
+						<div key={data.nome}
 							title='Atualmente, o nosso sistema suporta apenas solicitações via Whatsapp.'
 							className='flex flex-col'>
 							<a

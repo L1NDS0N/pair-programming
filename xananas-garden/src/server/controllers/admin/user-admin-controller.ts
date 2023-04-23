@@ -4,6 +4,7 @@ import { hashPasswordMiddleware } from '@/server/middlewares/hash-password-middl
 import prisma from '@/server/lib/prisma/client';
 import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
+import Prisma from '@/server/lib/prisma/client';
 
 export class UserAdminController {
 	router: NextApiRouter;
@@ -24,13 +25,12 @@ export class UserAdminController {
 						.json({ error: 'Nome, apelido, e-mail e senha são obrigatórios' });
 				}
 
-				try {
-					const hashedPassword = await bcrypt.hash(password, 10);
-					await prisma.user.create({
-						data: { name, username, email, password: hashedPassword },
+				try {					
+					await Prisma.new().user.create({
+						data: { name, username, email, password },
 					});
 
-					return res.status(201);
+					return res.status(201).end();
 				} catch (error) {
 					console.error('Erro ao criar usuário:', error);
 					res.status(500).json({ error: 'Erro ao criar usuário' });
@@ -50,11 +50,10 @@ export class UserAdminController {
 						.json({ error: 'ID, nome, e-mail e senha são obrigatórios' });
 				}
 
-				try {
-					const hashedPassword = await bcrypt.hash(password, 10);
-					const user = await prisma.user.update({
+				try {					
+					const user = await Prisma.new().user.update({
 						where: { id },
-						data: { name, email, password: hashedPassword },
+						data: { name, email, password },
 					});
 
 					res.json({
@@ -83,7 +82,7 @@ export class UserAdminController {
 				}
 
 				try {
-					await prisma.user.delete({ where: { id } });
+					await Prisma.new().user.delete({ where: { id } });
 
 					res.json({ message: 'Usuário deletado com sucesso' });
 				} catch (error) {

@@ -16,6 +16,7 @@ export class PrismaUsersRepository implements IUsersRepository {
 				email,
 				password,
 				username,
+				admin: false
 			},
 		});
 	}
