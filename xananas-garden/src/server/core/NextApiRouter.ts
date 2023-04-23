@@ -7,6 +7,16 @@ export type Middleware = (
 ) => void;
 type RouteHandler = (req: NextApiRequest, res: NextApiResponse) => void;
 
+export type NextApiRouter = {
+	get: (handler: RouteHandler, middlewares?: Middleware[]) => void;
+	post: (handler: RouteHandler, middlewares?: Middleware[]) => void;
+	put: (handler: RouteHandler, middlewares?: Middleware[]) => void;
+	delete: (handler: RouteHandler, middlewares?: Middleware[]) => void;
+	patch: (handler: RouteHandler, middlewares?: Middleware[]) => void;
+	use: (middleware: Middleware) => void;
+	handle: () => (req: NextApiRequest, res: NextApiResponse) => void;
+};
+
 enum HttpMethod {
 	GET = 'GET',
 	POST = 'POST',
@@ -18,44 +28,53 @@ enum HttpMethod {
 type Route = {
 	method: HttpMethod;
 	handler: RouteHandler;
-	middlewares: Middleware[];
+	middlewares?: Middleware[];
 };
 
-function createNextApiRouter() {
+function createNextApiRouter(): NextApiRouter {
 	const routes: Route[] = [];
 
-	function get(handler: RouteHandler) {
-		addRoute(HttpMethod.GET, handler);
+	function get(handler: RouteHandler, middlewares?: Middleware[]) {
+		addRoute(HttpMethod.GET, handler, middlewares);
 	}
 
-	function post(handler: RouteHandler) {
-		addRoute(HttpMethod.POST, handler);
+	function post(handler: RouteHandler, middlewares?: Middleware[]) {
+		addRoute(HttpMethod.POST, handler, middlewares);
 	}
 
-	function put(handler: RouteHandler) {
-		addRoute(HttpMethod.PUT, handler);
+	function put(handler: RouteHandler, middlewares?: Middleware[]) {
+		addRoute(HttpMethod.PUT, handler, middlewares);
 	}
 
-	function deleteRoute(handler: RouteHandler) {
-		addRoute(HttpMethod.DELETE, handler);
+	function deleteRoute(handler: RouteHandler, middlewares?: Middleware[]) {
+		addRoute(HttpMethod.DELETE, handler, middlewares);
 	}
 
-	function patch(handler: RouteHandler) {
-		addRoute(HttpMethod.PATCH, handler);
+	function patch(handler: RouteHandler, middlewares?: Middleware[]) {
+		addRoute(HttpMethod.PATCH, handler, middlewares);
 	}
 
 	function use(middleware: Middleware) {
 		routes.forEach(route => {
-			route.middlewares.push(middleware);
+			if (!route.middlewares) {
+				route.middlewares = [];
+				route.middlewares.push(middleware);
+			} else {
+				route.middlewares.push(middleware);
+			}
 		});
 	}
 
-	function addRoute(method: HttpMethod, handler: RouteHandler) {
-		const route = routes.find(route => route.method === method);
-		if (route) {
-			throw new Error(`Já existe um handler para a rota ${method}`);
+	function addRoute(
+		method: HttpMethod,
+		handler: RouteHandler,
+		middlewares?: Middleware[]
+	) {
+		const routeAlreadyExists = routes.find(route => route.method === method);
+		if (routeAlreadyExists) {
+			throw new Error(`It already has a route for ${method}`);
 		}
-		routes.push({ method, handler, middlewares: [] });
+		routes.push({ method, handler, middlewares });
 	}
 
 	function handle() {
@@ -64,13 +83,15 @@ function createNextApiRouter() {
 			const route = routes.find(route => route.method === method);
 			if (route) {
 				const middlewares: Middleware[] = [];
-				route.middlewares.forEach(middleware => {
-					middlewares.push(middleware);
-				});
+				if (route.middlewares) {
+					route.middlewares.forEach(middleware => {
+						middlewares.push(middleware);
+					});
+				}
 				middlewares.push(route.handler);
 				runMiddlewares(req, res, middlewares);
 			} else {
-				res.status(404).json({ error: 'Rota não encontrada' });
+				res.status(404).json({ error: 'Cannot find the route' });
 			}
 		};
 	}
