@@ -1,8 +1,6 @@
-// Importe as dependências necessárias
-import { AuthController } from '@/server/controllers/auth-controller';
+import { AuthAdminController } from '@/server/controllers/admin/auth-admin-controller';
 import createNextApiRouter from '@/server/core/NextApiRouter';
 
-const router = createNextApiRouter();
-const authController = new AuthController(router);
+const authController = new AuthAdminController(createNextApiRouter());
 authController.login();
 export default authController.handler();
