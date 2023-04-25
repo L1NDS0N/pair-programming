@@ -1,10 +1,10 @@
-import { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
+import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaUsersRepository } from '../repositories/implementation/prisma/users-repository-impl';
 
 export interface TJwtPayload extends jwt.JwtPayload {
 	id: string;
-	admin: boolean;
+	userSecret: string;
 }
 export const authenticateAdminMiddleware = async (
 	req: NextApiRequest,
@@ -20,12 +20,13 @@ export const authenticateAdminMiddleware = async (
 		}
 
 		const token = authorizationHeader.replace('Bearer ', '');
-		const decodedJwt = <TJwtPayload>jwt.verify(token, 'dev');
-		if (decodedJwt.id) {
-			const usersRepository = new PrismaUsersRepository();
-			const user = await usersRepository.findOne(decodedJwt.id);
+		const { id: userId, userSecret } = <TJwtPayload>jwt.verify(token, 'dev');
 
-			if (!user || (user && user.admin !== decodedJwt.admin)) {
+		if (userSecret) {
+			const usersRepository = new PrismaUsersRepository();
+			const user = await usersRepository.findOne(userId);
+
+			if (!user || user.admin === false || user.userSecret !== userSecret) {
 				throw new Error('O seu usuário não é valido, efetue login novamente');
 			}
 		}

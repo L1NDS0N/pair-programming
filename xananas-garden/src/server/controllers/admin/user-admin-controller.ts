@@ -1,10 +1,8 @@
 import { NextApiRouter } from '@/server/core/NextApiRouter';
+import Prisma from '@/server/lib/prisma/client';
 import { authenticateAdminMiddleware } from '@/server/middlewares/authenticate-middleware';
 import { hashPasswordMiddleware } from '@/server/middlewares/hash-password-middleware';
-import prisma from '@/server/lib/prisma/client';
-import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
-import Prisma from '@/server/lib/prisma/client';
 
 export class UserAdminController {
 	router: NextApiRouter;

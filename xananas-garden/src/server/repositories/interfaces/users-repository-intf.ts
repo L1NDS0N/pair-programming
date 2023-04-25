@@ -16,6 +16,16 @@ export interface IUsersData {
 	id: string;
 	name: string;
 	username: string;
+	userSecret: string;
+	email: string;
+	admin: boolean;
+}
+export interface IUserAuthData {
+	id: string;
+	name: string;
+	username: string;
+	password: string;
+	userSecret: string;
 	email: string;
 	admin: boolean;
 }
@@ -23,6 +33,9 @@ export interface IUsersData {
 export interface IUsersRepository {
 	create: (data: IUsersCreateData) => Promise<void>;
 	findOne: (id: string) => Promise<IUsersData>;
-	updateOne: (id: string, data: IUsersUpdateData) => Promise<void>;
-	updatePassword: (id: string, password: string) => Promise<void>;
+	findByEmail: (email: string) => Promise<IUsersData>;
+	findByUsername: (username: string) => Promise<IUsersData>;
+	findByEmailOrUsername: (emailOrUsername: string) => Promise<IUserAuthData>;
+	updateOne: (id: string, data: IUsersUpdateData) => Promise<boolean>;
+	updatePassword: (id: string, password: string) => Promise<boolean>;
 }

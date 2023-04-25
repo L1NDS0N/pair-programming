@@ -1,9 +1,9 @@
-import { TJwtPayload } from './../../middlewares/authenticate-middleware';
-import Prisma from '@/server/lib/prisma/client';
+import { PrismaUsersRepository } from '@/server/repositories/implementation/prisma/users-repository-impl';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NextApiRouter } from '../../core/NextApiRouter';
+import { TJwtPayload } from './../../middlewares/authenticate-middleware';
 
 export class AuthAdminController {
 	router: NextApiRouter;
@@ -25,15 +25,16 @@ export class AuthAdminController {
 			}
 
 			try {
-				const user = await Prisma.new().user.findUnique({ where: { email } });
+				const usersRepository = new PrismaUsersRepository();
 
+				const user = await usersRepository.findByEmailOrUsername(email);
 				if (!user || !(await bcrypt.compare(password, user.password))) {
 					return res.status(401).json({ error: 'E-mail ou senha inválidos' });
 				}
 
 				// lembrar de modificar o sign para um valor oriundo do .env
 				const token = jwt.sign(
-					{ id: user.id, admin: user.admin } as TJwtPayload,
+					{ id: user.id, userSecret: user.userSecret } as TJwtPayload,
 					'dev',
 					{
 						expiresIn: '8h',
