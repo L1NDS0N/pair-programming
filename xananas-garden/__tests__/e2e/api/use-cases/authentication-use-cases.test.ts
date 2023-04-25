@@ -74,7 +74,29 @@ describe('Api tests suite for authentication', () => {
 	it('Should login succefully using its username as email', async () => {
 		const response = await client
 			.post('/')
-			.send({ email: 'tesTador', password: 'password' });
+			.send({ email: 'testador', password: 'password' });
+
+		expect(response.status).toBe(200);
+		expect(response.body.user.userSecret).not.toBeDefined();
+		expect(response.body.user.password).not.toBeDefined();
+		expect(response.body).toEqual(
+			expect.objectContaining({
+				token: expect.anything(),
+				user: expect.objectContaining({
+					id: expect.anything(),
+					name: expect.anything(),
+					username: expect.anything(),
+					email: expect.anything(),
+					admin: expect.anything(),
+				}),
+			})
+		);
+	});
+
+	it('Should login succefully using its email in case insensitive format', async () => {
+		const response = await client
+			.post('/')
+			.send({ email: 'LiNdSoN@gMaIl.CoM', password: 'password' });
 
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
