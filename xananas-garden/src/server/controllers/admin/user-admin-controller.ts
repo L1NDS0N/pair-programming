@@ -2,6 +2,7 @@ import { NextApiRouter } from '@/server/core/NextApiRouter';
 import Prisma from '@/server/lib/prisma/client';
 import { authenticateAdminMiddleware } from '@/server/middlewares/authenticate-middleware';
 import { hashPasswordMiddleware } from '@/server/middlewares/hash-password-middleware';
+import { PrismaUsersRepository } from '@/server/repositories/implementation/prisma/users-repository-impl';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export class UserAdminController {
@@ -23,11 +24,15 @@ export class UserAdminController {
 						.json({ error: 'Nome, apelido, e-mail e senha são obrigatórios' });
 				}
 
-				try {					
-					await Prisma.new().user.create({
-						data: { name, username, email, password },
-					});
-
+				try {
+					let firstUserLogin = false;
+					if (req.query) {
+						const { first_user } = req.query;
+						firstUserLogin = Boolean(first_user);
+					}
+					const admin = firstUserLogin;
+					const usersRepository = new PrismaUsersRepository();
+					usersRepository.create({ name, email, username, password, admin });
 					return res.status(201).end();
 				} catch (error) {
 					console.error('Erro ao criar usuário:', error);
@@ -48,7 +53,7 @@ export class UserAdminController {
 						.json({ error: 'ID, nome, e-mail e senha são obrigatórios' });
 				}
 
-				try {					
+				try {
 					const user = await Prisma.new().user.update({
 						where: { id },
 						data: { name, email, password },

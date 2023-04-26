@@ -8,7 +8,7 @@ import {
 } from '../../interfaces/users-repository-intf';
 
 export class PrismaUsersRepository implements IUsersRepository {
-	async create({ name, email, password, username }: IUsersCreateData) {
+	async create({ name, email, password, username, admin }: IUsersCreateData) {
 		username = username.toLocaleLowerCase();
 		email = email.toLocaleLowerCase();
 		await Prisma.new().user.create({
@@ -17,9 +17,15 @@ export class PrismaUsersRepository implements IUsersRepository {
 				email,
 				password,
 				username,
-				admin: false,
+				admin,
 			},
 		});
+	}
+
+	async hasUsers(): Promise<boolean> {
+		const usersLength = await Prisma.new().user.count();
+
+		return usersLength > 0;
 	}
 
 	async findOne(id: string) {

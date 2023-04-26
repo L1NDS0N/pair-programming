@@ -12,6 +12,21 @@ export const authenticateAdminMiddleware = async (
 	next: () => void
 ) => {
 	try {
+		let firstUserLogin = false;
+		if (req.query) {
+			const { first_user } = req.query;
+			firstUserLogin = Boolean(first_user);
+		}
+
+		if (firstUserLogin) {
+			const usersRepository = new PrismaUsersRepository();
+			const alreadyHasUsers = await usersRepository.hasUsers();
+			if (alreadyHasUsers) {
+				throw new Error('Esta funcionalidade já está obsoleta');
+			}
+			return next();
+		}
+
 		const authorizationHeader = req.headers.authorization;
 		if (!authorizationHeader) {
 			return res
@@ -31,7 +46,7 @@ export const authenticateAdminMiddleware = async (
 			}
 		}
 		next();
-	} catch (error) {
-		return res.status(401).json({ error: 'Token de autorização inválido' });
+	} catch (error: any) {
+		return res.status(400).json({ error: error.message });
 	}
 };

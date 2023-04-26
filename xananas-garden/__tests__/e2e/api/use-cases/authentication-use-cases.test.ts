@@ -1,19 +1,30 @@
+import { Server } from 'http';
 import request from 'supertest';
 import {
-	createTestClient,
+	createClientServer,
 	getApiRoutesDirHandler,
 } from '../../helpers/api-client-create-helper';
 
 describe('Api tests suite for authentication', () => {
 	let client: request.SuperTest<request.Test>;
+	let server: Server;
 
 	beforeAll(() => {
-		client = createTestClient(getApiRoutesDirHandler('/admin/auth'));
+		const { _client, _server } = createClientServer(
+			getApiRoutesDirHandler('/admin/auth')
+		);
+		server = _server;
+		client = _client;
+	});
+	afterAll(done => {
+		client.checkout('/admin/auth');
+		server.close(err => {
+			done(err?.message);
+		});
 	});
 
 	it('Should not login without user credentials', async () => {
 		const response = await client.post('/');
-
 		expect(response.status).toBe(400);
 		expect(response.body).not.toHaveProperty('user');
 		expect(response.body).not.toHaveProperty('token');

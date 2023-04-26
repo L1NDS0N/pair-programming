@@ -38,4 +38,5 @@ export interface IUsersRepository {
 	findByEmailOrUsername: (emailOrUsername: string) => Promise<IUserAuthData>;
 	updateOne: (id: string, data: IUsersUpdateData) => Promise<boolean>;
 	updatePassword: (id: string, password: string) => Promise<boolean>;
+	hasUsers: () => Promise<boolean>;
 }

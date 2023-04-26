@@ -4,7 +4,7 @@ import { apiResolver } from 'next/dist/server/api-utils/node';
 import path from 'path';
 import request from 'supertest';
 
-export function createTestClient(handler: NextApiHandler) {
+export function createClientServer(handler: NextApiHandler) {
 	const listener: RequestListener = async (req, res) => {
 		return await apiResolver(
 			req,
@@ -19,8 +19,9 @@ export function createTestClient(handler: NextApiHandler) {
 			false
 		);
 	};
-
-	return request(createServer(listener));
+	const _server = createServer(listener);
+	const _client = request(_server);
+	return { _client, _server };
 }
 export function getApiRoutesDirHandler(relativeDir: string): NextApiHandler {
 	const apiRoutesDir = path.join(
