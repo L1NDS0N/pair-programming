@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaUsersRepository } from '../repositories/implementation/prisma/users-repository-impl';
+import { whoAmI } from '../helpers/whoami';
 
 export interface TJwtPayload extends jwt.JwtPayload {
 	id: string;
@@ -13,11 +14,10 @@ export const authenticateAdminMiddleware = async (
 ) => {
 	try {
 		let firstUserLogin = false;
-		if (req.query) {
-			const { first_user } = req.query;
+		if (req.body && req.body.first_user) {
+			const { first_user } = req.body;
 			firstUserLogin = Boolean(first_user);
 		}
-
 		if (firstUserLogin) {
 			const usersRepository = new PrismaUsersRepository();
 			const alreadyHasUsers = await usersRepository.hasUsers();
@@ -33,14 +33,13 @@ export const authenticateAdminMiddleware = async (
 				.status(401)
 				.json({ error: 'Token de autorização não fornecido' });
 		}
-
-		const token = authorizationHeader.replace('Bearer ', '');
-		const { id: userId, userSecret } = <TJwtPayload>jwt.verify(token, 'dev');
+	
+		const jwtSecret = process.env.JWT_SECRET as string;
+		const { id: userId, userSecret } = <TJwtPayload>whoAmI(authorizationHeader, jwtSecret);
 
 		if (userSecret) {
 			const usersRepository = new PrismaUsersRepository();
 			const user = await usersRepository.findOne(userId);
-
 			if (!user || user.admin === false || user.userSecret !== userSecret) {
 				throw new Error('O seu usuário não é valido, efetue login novamente');
 			}

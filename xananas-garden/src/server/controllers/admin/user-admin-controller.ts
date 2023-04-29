@@ -1,7 +1,11 @@
+import { DADOS } from '@/faker/catalogo-fake';
 import { NextApiRouter } from '@/server/core/NextApiRouter';
+import { sanitizeObject } from '@/server/helpers/sanitizeObject';
+import { whoAmI } from '@/server/helpers/whoami';
 import Prisma from '@/server/lib/prisma/client';
 import { authenticateAdminMiddleware } from '@/server/middlewares/authenticate-middleware';
 import { hashPasswordMiddleware } from '@/server/middlewares/hash-password-middleware';
+import { TUserCredentialsJwtSignature } from '@/server/models/User';
 import { PrismaUsersRepository } from '@/server/repositories/implementation/prisma/users-repository-impl';
 import { NextApiRequest, NextApiResponse } from 'next';
 
@@ -25,18 +29,20 @@ export class UserAdminController {
 				}
 
 				try {
-					let firstUserLogin = false;
-					if (req.query) {
-						const { first_user } = req.query;
-						firstUserLogin = Boolean(first_user);
+					let admin = false;
+					if (req.body && req.body.first_user) {
+						admin = true;
 					}
-					const admin = firstUserLogin;
 					const usersRepository = new PrismaUsersRepository();
+					const userAlreadyExists = await usersRepository.findByEmail(email);
+					if (userAlreadyExists) throw new Error('Usuário já existe');
+
 					usersRepository.create({ name, email, username, password, admin });
 					return res.status(201).end();
-				} catch (error) {
-					console.error('Erro ao criar usuário:', error);
-					res.status(500).json({ error: 'Erro ao criar usuário' });
+				} catch (error: any) {
+					return res.status(400).json({
+						error: 'Erro ao criar usuário. ' + error.message,
+					});
 				}
 			},
 			[authenticateAdminMiddleware, hashPasswordMiddleware]
@@ -46,30 +52,55 @@ export class UserAdminController {
 	async update() {
 		this.router.put(
 			async (req: NextApiRequest, res: NextApiResponse) => {
-				const { id, name, email, password } = req.body;
-				if (!id || !name || !email || !password) {
-					return res
-						.status(400)
-						.json({ error: 'ID, nome, e-mail e senha são obrigatórios' });
-				}
+				const { id, name, email, username } = req.body;
 
 				try {
-					const user = await Prisma.new().user.update({
-						where: { id },
-						data: { name, email, password },
-					});
+					const jwtSecret = process.env.JWT_SECRET as string;
+					const userCredentials = whoAmI<TUserCredentialsJwtSignature>(
+						req.headers.authorization!,
+						jwtSecret
+					);
 
-					res.json({
+					if (id && !userCredentials.admin && id !== userCredentials.id) {
+						throw new Error(
+							'Você não pode alterar informações de outro usuário sem ser um administrador do sistema'
+						);
+					}
+					const usersRepository = new PrismaUsersRepository();
+					const idForUpdate = id ?? userCredentials.id;
+
+					if (email) {
+						const user = await usersRepository.findByEmail(email);
+						if (user && user.id !== idForUpdate) {
+							throw new Error('Email já está sendo utilizado');
+						}
+					}
+					if (username) {
+						const user = await usersRepository.findByUsername(username);
+						if (user && user.id !== idForUpdate) {
+							throw new Error('Username já está sendo utilizado');
+						}
+					}
+
+					const objSanitized = sanitizeObject({ name, email, username });
+					const user = await usersRepository.updateOne(
+						idForUpdate,
+						objSanitized
+					);
+
+					return res.status(200).json({
 						user: {
 							id: user.id,
 							name: user.name,
+							username: user.username,
 							email: user.email,
 							admin: user.admin,
 						},
 					});
-				} catch (error) {
-					console.error('Erro ao atualizar usuário:', error);
-					res.status(500).json({ error: 'Erro ao atualizar usuário' });
+				} catch (error: any) {
+					return res
+						.status(500)
+						.json({ error: 'Erro ao atualizar usuário. ' + error.message });
 				}
 			},
 			[authenticateAdminMiddleware, hashPasswordMiddleware]
@@ -87,10 +118,10 @@ export class UserAdminController {
 				try {
 					await Prisma.new().user.delete({ where: { id } });
 
-					res.json({ message: 'Usuário deletado com sucesso' });
+					return res.json({ message: 'Usuário deletado com sucesso' });
 				} catch (error) {
 					console.error('Erro ao deletar usuário:', error);
-					res.status(500).json({ error: 'Erro ao deletar usuário' });
+					return res.status(500).json({ error: 'Erro ao deletar usuário' });
 				}
 			},
 			[authenticateAdminMiddleware]

@@ -38,6 +38,7 @@ export class PrismaUsersRepository implements IUsersRepository {
 				name: true,
 				email: true,
 				username: true,
+				userSecret: true,
 				admin: true,
 			},
 		})) as IUsersData;
@@ -97,18 +98,26 @@ export class PrismaUsersRepository implements IUsersRepository {
 		return user;
 	}
 
-	async updateOne(id: string, data: IUsersUpdateData): Promise<boolean> {
-		try {
-			await Prisma.new().user.update({
-				where: {
-					id,
+	async updateOne(
+		id: string,
+		data: IUsersUpdateData
+	): Promise<Partial<IUserAuthData>> {
+		const dataUpdated = await Prisma.new()
+			.user.update({
+				select: {
+					id: true,
+					name: true,
+					email: true,
+					username: true,
+					admin: true,
 				},
-				data,
-			});
-			return true;
-		} catch (error) {
-			return false;
-		}
+				where: {
+					id: id
+				},
+				data: data,
+			});		
+
+		return dataUpdated;
 	}
 
 	async updatePassword(id: string, password: string) {

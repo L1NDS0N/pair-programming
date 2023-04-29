@@ -32,10 +32,10 @@ export class AuthAdminController {
 					return res.status(401).json({ error: 'E-mail ou senha inválidos' });
 				}
 
-				// lembrar de modificar o sign para um valor oriundo do .env
+				const jwtSecret = process.env.JWT_SECRET as string;
 				const token = jwt.sign(
-					{ id: user.id, userSecret: user.userSecret } as TJwtPayload,
-					'dev',
+					{ id: user.id, userSecret: user.userSecret, admin: user.admin } as TJwtPayload,
+					jwtSecret,
 					{
 						expiresIn: '8h',
 					}

@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 export default class Prisma {
 	private static prismaClient: PrismaClient;
 	private static instance: Prisma;
@@ -7,7 +9,14 @@ export default class Prisma {
 	constructor() {
 		if (!Prisma.instance) {
 			Prisma.instance = this;
-			Prisma.prismaClient = new PrismaClient({ log: ['query'] });
+			Prisma.prismaClient = new PrismaClient({
+				datasources: {
+					db: {
+						url: isTestEnv ? 'file:tests.db' : 'file:dev.db',
+					},
+				},
+				log: isTestEnv ? [] : ['query'],
+			});
 		}
 
 		return Prisma.instance;
@@ -15,7 +24,14 @@ export default class Prisma {
 
 	public static new() {
 		if (!Prisma.prismaClient) {
-			Prisma.prismaClient = new PrismaClient({ log: ['query'] });
+			Prisma.prismaClient = new PrismaClient({
+				datasources: {
+					db: {
+						url: isTestEnv ? 'file:tests.db' : 'file:dev.db',
+					},
+				},
+				log: isTestEnv ? [] : ['query'],
+			});
 		}
 		return Prisma.prismaClient;
 	}
