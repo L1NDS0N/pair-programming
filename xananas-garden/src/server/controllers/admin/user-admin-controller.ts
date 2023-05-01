@@ -1,13 +1,11 @@
-import { DADOS } from '@/faker/catalogo-fake';
 import { NextApiRouter } from '@/server/core/NextApiRouter';
 import { hashPassword } from '@/server/helpers/hashPassword';
 import { sanitizeObject } from '@/server/helpers/sanitizeObject';
 import { whoAmI } from '@/server/helpers/whoami';
-import Prisma from '@/server/lib/prisma/client';
 import { authenticateAdminMiddleware } from '@/server/middlewares/authenticate-middleware';
 import { hashPasswordMiddleware } from '@/server/middlewares/hash-password-middleware';
 import { TUserCredentialsJwtSignature } from '@/server/models/User';
-import { GLOBAL_CONST } from '@/server/references/global-constants';
+import { APP_RULES } from '@/server/references/app-rules';
 import { PrismaUsersRepository } from '@/server/repositories/implementation/prisma/users-repository-impl';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
@@ -22,9 +20,32 @@ export class UserAdminController {
 	}
 
 	async create() {
+		const { _exceptions, _email, _name, _password, _username } = APP_RULES.user;
+		const schema = z.object({
+			name: z
+				.string()
+				.min(_name.min.val, _name.min.message)
+				.nonempty(_name.notEmpty.message),
+			email: z
+				.string()
+				.email(_email.validation.message)
+				.nonempty(_email.notEmpty.message),
+			username: z
+				.string()
+				.regex(_username.regex.val, _username.regex.message)
+				.nonempty(_username.notEmpty.message),
+			password: z
+				.string()
+				.min(_password.min.val, _password.min.message)
+				.max(_password.max.val, _password.max.message)
+				.nonempty(_password.notEmpty.message)
+				.refine(_password.regex._1st.check, _password.regex._1st.message)
+				.refine(_password.regex._2nd.check, _password.regex._2nd.message),
+		});
 		this.router.post(
 			async (req: NextApiRequest, res: NextApiResponse) => {
-				const { name, username, email, password, hashedPassword } = req.body;
+				const { name, username, email, password } = schema.parse(req.body);
+				const { hashedPassword } = req.body;
 				if (!name || !username || !email || !password) {
 					return res
 						.status(400)
@@ -54,7 +75,7 @@ export class UserAdminController {
 					return res.status(201).end();
 				} catch (error: any) {
 					return res.status(400).json({
-						error: 'Erro ao criar usuário. ' + error.message,
+						error: _exceptions.default.context.create.message + error.message,
 					});
 				}
 			},
@@ -63,42 +84,30 @@ export class UserAdminController {
 	}
 
 	async update() {
+		const { _password, _name, _email, _username, _exceptions } = APP_RULES.user;
+		const schema = z.object({
+			id: z.string().optional(),
+			name: z.string().min(_name.min.val, _name.min.message).optional(),
+			email: z.string().email(_email.validation.message).optional(),
+			username: z
+				.string()
+				.regex(_username.regex.val, _username.regex.message)
+				.optional(),
+			password: z
+				.string()
+				.min(_password.min.val, _password.min.message)
+				.max(_password.max.val, _password.max.message)
+				.refine(_password.regex._1st.check, _password.regex._1st.message)
+				.refine(_password.regex._2nd.check, _password.regex._2nd.message)
+				.optional(),
+		});
 		this.router.put(
 			async (req: NextApiRequest, res: NextApiResponse) => {
-				const { maxPasswordLength, minPasswordLength } = GLOBAL_CONST.user;
-				const schema = z.object({
-					id: z.string().optional(),
-					name: z.string().optional(),
-					email: z.string().email('Formato de email inválido.').optional(),
-					username: z
-						.string()
-						.regex(
-							/^[a-zA-Z0-9._-]{3,20}$/,
-							'O formato do apelido de usuário é inválido.'
-						)
-						.optional(),
-					password: z
-						.string()
-						.min(
-							minPasswordLength,
-							`Tamanho mínimo do campo de senha é ${minPasswordLength.toString()} caracteres`
-						)
-						.max(
-							maxPasswordLength,
-							`Tamanho máximo da senha ${maxPasswordLength.toString()} caracteres`
-						)
-						.refine(password => /[a-z]/.test(password), {
-							message: 'A Senha deve conter pelo menos uma letra minúscula',
-						})
-						.refine(password => /[A-Z]/.test(password), {
-							message: 'A Senha deve conter pelo menos uma letra maiúscula',
-						})
-						.optional(),
-				});
 				try {
 					const { id, name, email, username, password } = schema.parse(
 						req.body
 					);
+
 					const jwtSecret = process.env.JWT_SECRET as string;
 					const userCredentials = whoAmI<TUserCredentialsJwtSignature>(
 						req.headers.authorization!,
@@ -107,7 +116,7 @@ export class UserAdminController {
 
 					if (id && !userCredentials.admin && id !== userCredentials.id) {
 						throw new Error(
-							'Você não pode alterar informações de outro usuário sem ser um administrador do sistema'
+							_exceptions.case.trying_to_update_another_user_info.message
 						);
 					}
 					const usersRepository = new PrismaUsersRepository();
@@ -116,13 +125,17 @@ export class UserAdminController {
 					if (email) {
 						const user = await usersRepository.findByEmail(email);
 						if (user) {
-							throw new Error('Email já está sendo utilizado');
+							throw new Error(
+								_exceptions.case.trying_to_use_an_email_that_already_exists.message
+							);
 						}
 					}
 					if (username) {
 						const user = await usersRepository.findByUsername(username);
 						if (user) {
-							throw new Error('Username já está sendo utilizado');
+							throw new Error(
+								_exceptions.case.trying_to_use_an_username_that_already_exists.message
+							);
 						}
 					}
 
@@ -130,8 +143,9 @@ export class UserAdminController {
 						name,
 						email,
 						username,
-						password,
+						password: password ? hashPassword(password) : '',
 					});
+
 					const user = await usersRepository.updateOne(
 						idForUpdate,
 						objSanitized
@@ -149,12 +163,14 @@ export class UserAdminController {
 				} catch (error: any) {
 					if (error instanceof z.ZodError) {
 						return res.status(400).json({
-							error: 'Erro ao atualizar usuário. ' + error.issues[0].message,
+							error:
+								_exceptions.default.context.update.message +
+								error.issues[0].message,
 						});
 					}
-					return res
-						.status(400)
-						.json({ error: 'Erro ao atualizar usuário. ' + error.message });
+					return res.status(400).json({
+						error: _exceptions.default.context.update.message + error.message,
+					});
 				}
 			},
 			[authenticateAdminMiddleware]
@@ -162,6 +178,8 @@ export class UserAdminController {
 	}
 
 	async delete() {
+		const { _exceptions } = APP_RULES.user;
+
 		this.router.delete(
 			async (req: NextApiRequest, res: NextApiResponse) => {
 				const { id } = req.body;
@@ -183,14 +201,15 @@ export class UserAdminController {
 
 				try {
 					if (await usersRepository.deleteOne(idForDelete)) {
-						return res.json({ message: 'Usuário deletado com sucesso' });
+						return res.json(_exceptions.default.context.delete.success);
 					} else {
 						throw new Error('Erro durante deleção do usuário');
 					}
 				} catch (error: any) {
-					return res
-						.status(400)
-						.json({ error: 'Erro ao deletar usuário ' + error.message });
+					return res.status(400).json({
+						error:
+							_exceptions.default.context.delete.error.message + error.message,
+					});
 				}
 			},
 			[authenticateAdminMiddleware]

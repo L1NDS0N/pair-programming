@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "NODE_ENV=production next start",
     "lint": "next lint",
-    "test": "NODE_ENV=test jest",
-    "test:dev": "NODE_ENV=test jest --watch",
+    "test": "NODE_ENV=test jest --runInBand",
+    "test:dev": "NODE_ENV=test jest --watchAll --runInBand",
     "migrate-test": "npx prisma migrate dev --schema=./prisma/schema.test.prisma",
     "studio-test": "npx prisma studio --schema=./prisma/schema.test.prisma"
   },

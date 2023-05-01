@@ -4,6 +4,7 @@ import {
 	createClientServer,
 	getApiRoutesDirHandler,
 } from '../../helpers/api-client-create-helper';
+import { APP_RULES } from '@/server/references/app-rules';
 
 type TUserCredentials = {
 	token: string;
@@ -20,6 +21,8 @@ type TUserLogin = {
 	password: string;
 };
 describe('Api tests suite for user crud', () => {
+	const { _exceptions, _email,  _password, _username } = APP_RULES.user;
+
 	let adminUserCredentials: TUserCredentials;
 	let commonUserCredentials: TUserCredentials;
 	let adminUserLogin: TUserLogin;
@@ -188,7 +191,9 @@ describe('Api tests suite for user crud', () => {
 			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
-			error: 'Erro ao atualizar usuário. Username já está sendo utilizado',
+			error:
+				_exceptions.default.context.update.message +
+				_exceptions.case.trying_to_use_an_username_that_already_exists.message,
 		});
 	});
 
@@ -203,9 +208,12 @@ describe('Api tests suite for user crud', () => {
 
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
-			error: 'Erro ao atualizar usuário. Email já está sendo utilizado',
+			error:
+				_exceptions.default.context.update.message +
+				_exceptions.case.trying_to_use_an_email_that_already_exists.message,
 		});
 	});
+
 	it('Should not update with an email with wrong email format', async () => {
 		const userToUpdate = {
 			email: 'testing@com',
@@ -216,7 +224,7 @@ describe('Api tests suite for user crud', () => {
 			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
-			error: 'Erro ao atualizar usuário. Formato de email inválido.',
+			error: _exceptions.default.context.update.message + _email.validation.message,
 		});
 	});
 
@@ -232,7 +240,7 @@ describe('Api tests suite for user crud', () => {
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
 			error:
-				'Erro ao atualizar usuário. O formato do apelido de usuário é inválido.',
+				_exceptions.default.context.update.message + _username.regex.message,
 		});
 	});
 
@@ -247,11 +255,11 @@ describe('Api tests suite for user crud', () => {
 
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
-			error:
-				'Erro ao atualizar usuário. Tamanho mínimo do campo de senha é 8 caracteres',
+			error: _exceptions.default.context.update.message + _password.min.message,
 		});
 	});
-	it('Should not be able to update password with a weak password format', async () => {
+
+	it('Should not be able to update password with a weak password format (only lowercase chars)', async () => {
 		const userToUpdate = {
 			password: 'password123',
 		};
@@ -263,7 +271,25 @@ describe('Api tests suite for user crud', () => {
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
 			error:
-				'Erro ao atualizar usuário. A Senha deve conter pelo menos uma letra maiúscula',
+				_exceptions.default.context.update.message +
+				_password.regex._2nd.message,
+		});
+	});
+
+	it('Should not be able to update password with a weak password format (only UPPERCASE chars)', async () => {
+		const userToUpdate = {
+			password: 'PASSWORD123',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				_exceptions.default.context.update.message +
+				_password.regex._1st.message,
 		});
 	});
 
@@ -279,7 +305,9 @@ describe('Api tests suite for user crud', () => {
 
 		if (response.status === 400) {
 			expect(response.body).toEqual({
-				error: 'Erro ao atualizar usuário. Email já está sendo utilizado',
+				error:
+					_exceptions.default.context.update.message +
+					_exceptions.case.trying_to_use_an_email_that_already_exists.message,
 			});
 		} else {
 			expect(response.status).toBe(200);
@@ -297,12 +325,14 @@ describe('Api tests suite for user crud', () => {
 		}
 	});
 
-	it('Should delete user properly', async () => {
+	it('Should delete common user properly', async () => {
 		const response = await client
 			.delete('/')
 			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
 
 		expect(response.status).toBe(200);
-		expect(response.body).toEqual({ message: 'Usuário deletado com sucesso' });
+		expect(response.body).toEqual(_exceptions.default.context.delete.success);
 	});
+
+	
 });

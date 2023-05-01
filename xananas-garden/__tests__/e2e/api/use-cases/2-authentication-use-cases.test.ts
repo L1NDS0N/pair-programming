@@ -4,10 +4,24 @@ import {
 	createClientServer,
 	getApiRoutesDirHandler,
 } from '../../helpers/api-client-create-helper';
+import { APP_RULES } from '@/server/references/app-rules';
 
+type TUserCredentials = {
+	token: string;
+	user: {
+		id: string;
+		name: string;
+		username: string;
+		email: string;
+		admin: boolean;
+	};
+};
 describe('Api tests suite for authentication', () => {
+	const { _exceptions } = APP_RULES.user;
+
 	let client: request.SuperTest<request.Test>;
 	let server: Server;
+	let adminUserCredentials: TUserCredentials;
 
 	beforeAll(() => {
 		const { _client, _server } = createClientServer(
@@ -108,7 +122,7 @@ describe('Api tests suite for authentication', () => {
 		const response = await client
 			.post('/')
 			.send({ email: 'LiNdSoN@gMaIl.CoM', password: 'password' });
-		
+
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
 		expect(response.body.user.password).not.toBeDefined();
@@ -124,5 +138,14 @@ describe('Api tests suite for authentication', () => {
 				}),
 			})
 		);
+		adminUserCredentials = response.body;
 	});
+	// it('Should delete admin user properly', async () => {
+	// 	const response = await client
+	// 		.delete('/')
+	// 		.set('Authorization', `Bearer ${adminUserCredentials.token}`);
+
+	// 	expect(response.status).toBe(200);
+	// 	expect(response.body).toEqual(_exceptions.default.context.delete.success);
+	// });
 });
