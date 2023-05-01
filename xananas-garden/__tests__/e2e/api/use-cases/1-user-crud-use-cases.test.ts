@@ -21,7 +21,7 @@ type TUserLogin = {
 	password: string;
 };
 describe('Api tests suite for user crud', () => {
-	const { _exceptions, _email,  _password, _username } = APP_RULES.user;
+	const { _exceptions, _email, _password, _username } = APP_RULES.user;
 
 	let adminUserCredentials: TUserCredentials;
 	let commonUserCredentials: TUserCredentials;
@@ -53,7 +53,7 @@ describe('Api tests suite for user crud', () => {
 			name: 'Lindson França',
 			username: 'testador',
 			email: 'lindson@gmail.com',
-			password: 'password',
+			password: 'Password@123',
 		};
 		adminUserLogin = {
 			email: userToBeCreated.email,
@@ -107,7 +107,7 @@ describe('Api tests suite for user crud', () => {
 			name: 'Tester user',
 			username: 'tester',
 			email: 'testing@gmail.com',
-			password: 'test_pass',
+			password: 'Test_pass@123',
 		};
 		const response = await client
 			.post('/')
@@ -149,7 +149,7 @@ describe('Api tests suite for user crud', () => {
 		}
 		commonUserLogin = {
 			email: 'testing@gmail.com',
-			password: 'test_pass',
+			password: 'Test_pass@123',
 		};
 		await login(commonUserLogin);
 		_server.close(() => {
@@ -224,7 +224,8 @@ describe('Api tests suite for user crud', () => {
 			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
-			error: _exceptions.default.context.update.message + _email.validation.message,
+			error:
+				_exceptions.default.context.update.message + _email.validation.message,
 		});
 	});
 
@@ -256,6 +257,40 @@ describe('Api tests suite for user crud', () => {
 		expect(response.status).toBe(400);
 		expect(response.body).toEqual({
 			error: _exceptions.default.context.update.message + _password.min.message,
+		});
+	});
+	
+	it('Should not be able to update password with a password without the secure password pattern (without numbers)', async () => {
+		const userToUpdate = {
+			password: 'Passwordd',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				_exceptions.default.context.update.message +
+				_password.regex._3rd.message,
+		});
+	});
+
+	it('Should not be able to update password with a password without the secure password pattern (without special symbols)', async () => {
+		const userToUpdate = {
+			password: 'Password1',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				_exceptions.default.context.update.message +
+				_password.regex._4th.message,
 		});
 	});
 
@@ -333,6 +368,4 @@ describe('Api tests suite for user crud', () => {
 		expect(response.status).toBe(200);
 		expect(response.body).toEqual(_exceptions.default.context.delete.success);
 	});
-
-	
 });

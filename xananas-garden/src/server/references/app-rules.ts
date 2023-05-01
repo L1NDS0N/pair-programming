@@ -25,7 +25,7 @@ export const APP_RULES = {
 			},
 		},
 		_password: {
-			notEmpty: {message: 'O campo de senha é requerido'},
+			notEmpty: { message: 'O campo de senha é requerido' },
 			min: {
 				val: 8,
 				message: 'Tamanho mínimo do campo de senha é 8 caracteres.',
@@ -42,6 +42,14 @@ export const APP_RULES = {
 				_2nd: {
 					check: (password: string) => /[A-Z]/.test(password),
 					message: 'A Senha deve conter pelo menos uma letra maiúscula.',
+				},
+				_3rd: {
+					check: (password: string) => /\d/.test(password),
+					message: 'A Senha deve conter pelo menos um número.',
+				},
+				_4th: {
+					check: (password: string) => /\W/.test(password),
+					message: 'A Senha deve conter pelo menos um caractere especial.',
 				},
 			},
 		},

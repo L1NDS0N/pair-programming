@@ -40,7 +40,9 @@ export class UserAdminController {
 				.max(_password.max.val, _password.max.message)
 				.nonempty(_password.notEmpty.message)
 				.refine(_password.regex._1st.check, _password.regex._1st.message)
-				.refine(_password.regex._2nd.check, _password.regex._2nd.message),
+				.refine(_password.regex._2nd.check, _password.regex._2nd.message)
+				.refine(_password.regex._3rd.check, _password.regex._3rd.message)
+				.refine(_password.regex._4th.check, _password.regex._4th.message),
 		});
 		this.router.post(
 			async (req: NextApiRequest, res: NextApiResponse) => {
@@ -99,6 +101,8 @@ export class UserAdminController {
 				.max(_password.max.val, _password.max.message)
 				.refine(_password.regex._1st.check, _password.regex._1st.message)
 				.refine(_password.regex._2nd.check, _password.regex._2nd.message)
+				.refine(_password.regex._3rd.check, _password.regex._3rd.message)
+				.refine(_password.regex._4th.check, _password.regex._4th.message)
 				.optional(),
 		});
 		this.router.put(

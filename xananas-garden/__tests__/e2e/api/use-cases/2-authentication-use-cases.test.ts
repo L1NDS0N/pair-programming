@@ -30,6 +30,7 @@ describe('Api tests suite for authentication', () => {
 		server = _server;
 		client = _client;
 	});
+
 	afterAll(done => {
 		client.checkout('/admin/auth');
 		server.close(err => {
@@ -77,7 +78,7 @@ describe('Api tests suite for authentication', () => {
 	it('Should login succefully using its email', async () => {
 		const response = await client
 			.post('/')
-			.send({ email: 'lindson@gmail.com', password: 'password' });
+			.send({ email: 'lindson@gmail.com', password: 'Password@123' });
 
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
@@ -99,7 +100,7 @@ describe('Api tests suite for authentication', () => {
 	it('Should login succefully using its username as email', async () => {
 		const response = await client
 			.post('/')
-			.send({ email: 'testador', password: 'password' });
+			.send({ email: 'testador', password: 'Password@123' });
 
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
@@ -121,7 +122,7 @@ describe('Api tests suite for authentication', () => {
 	it('Should login succefully using its email in case insensitive format', async () => {
 		const response = await client
 			.post('/')
-			.send({ email: 'LiNdSoN@gMaIl.CoM', password: 'password' });
+			.send({ email: 'LiNdSoN@gMaIl.CoM', password: 'Password@123' });
 
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
@@ -140,12 +141,5 @@ describe('Api tests suite for authentication', () => {
 		);
 		adminUserCredentials = response.body;
 	});
-	// it('Should delete admin user properly', async () => {
-	// 	const response = await client
-	// 		.delete('/')
-	// 		.set('Authorization', `Bearer ${adminUserCredentials.token}`);
 
-	// 	expect(response.status).toBe(200);
-	// 	expect(response.body).toEqual(_exceptions.default.context.delete.success);
-	// });
 });
