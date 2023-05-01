@@ -21,7 +21,7 @@ export class AuthAdminController {
 			if (!email || !password) {
 				return res
 					.status(400)
-					.json({ error: 'E-mail e senha são obrigatórios' });
+					.send({ error: 'E-mail e senha são obrigatórios' });
 			}
 
 			try {
@@ -29,7 +29,7 @@ export class AuthAdminController {
 
 				const user = await usersRepository.findByEmailOrUsername(email);
 				if (!user || !(await bcrypt.compare(password, user.password))) {
-					return res.status(401).json({ error: 'E-mail ou senha inválidos' });
+					return res.status(401).send({ error: 'E-mail ou senha inválidos' });
 				}
 
 				const jwtSecret = process.env.JWT_SECRET as string;
@@ -41,7 +41,7 @@ export class AuthAdminController {
 					}
 				);
 
-				res.json({
+				return res.send({
 					token,
 					user: {
 						id: user.id,
@@ -53,7 +53,7 @@ export class AuthAdminController {
 				});
 			} catch (error) {
 				console.error('Erro ao fazer login:', error);
-				res.status(500).json({ error: 'Erro ao fazer login' });
+				res.status(500).send({ error: 'Erro ao fazer login' });
 			}
 		});
 	}

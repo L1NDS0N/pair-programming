@@ -20,8 +20,10 @@ type TUserLogin = {
 	password: string;
 };
 describe('Api tests suite for user crud', () => {
-	let userCredentials: TUserCredentials;
-	let userLogin: TUserLogin;
+	let adminUserCredentials: TUserCredentials;
+	let commonUserCredentials: TUserCredentials;
+	let adminUserLogin: TUserLogin;
+	let commonUserLogin: TUserLogin;
 	let client: request.SuperTest<request.Test>;
 	let server: Server;
 
@@ -50,7 +52,7 @@ describe('Api tests suite for user crud', () => {
 			email: 'lindson@gmail.com',
 			password: 'password',
 		};
-		userLogin = {
+		adminUserLogin = {
 			email: userToBeCreated.email,
 			password: userToBeCreated.password,
 		};
@@ -89,24 +91,25 @@ describe('Api tests suite for user crud', () => {
 					}),
 				})
 			);
-			userCredentials = response.body as TUserCredentials;
+			adminUserCredentials = response.body as TUserCredentials;
 		}
-		await login(userLogin);
-		server.close(() => {
+		await login(adminUserLogin);
+		_server.close(() => {
 			client.checkout('/admin/auth');
 		});
 	});
 
 	it('Should create an user only using an admin credential', async () => {
+		const userToBeCreated = {
+			name: 'Tester user',
+			username: 'tester',
+			email: 'testing@gmail.com',
+			password: 'test_pass',
+		};
 		const response = await client
 			.post('/')
-			.send({
-				name: 'Tester user',
-				username: 'tester',
-				email: 'testing@gmail.com',
-				password: 'test_pass',
-			})
-			.set('Authorization', `Bearer ${userCredentials.token}`);
+			.send(userToBeCreated)
+			.set('Authorization', `Bearer ${adminUserCredentials.token}`);
 		if (response.status === 400) {
 			expect(response.status).toBe(400);
 			expect(response.body).toEqual({
@@ -116,22 +119,190 @@ describe('Api tests suite for user crud', () => {
 			expect(response.status).toBe(201);
 		}
 	});
-// consertar esse teste
-	it('Should update a user only with an admin token', async () => {
+
+	it('Should login with the recently common user created', async () => {
+		const { _client, _server } = createClientServer(
+			getApiRoutesDirHandler('/admin/auth')
+		);
+		async function login(aUserLogin: TUserLogin) {
+			const response = await _client.post('/').send(aUserLogin);
+
+			expect(response.status).toBe(200);
+			expect(response.body.user.userSecret).not.toBeDefined();
+			expect(response.body.user.password).not.toBeDefined();
+			expect(response.body).toEqual(
+				expect.objectContaining({
+					token: expect.anything(),
+					user: expect.objectContaining({
+						id: expect.anything(),
+						name: expect.anything(),
+						username: expect.anything(),
+						email: expect.anything(),
+						admin: expect.anything(),
+					}),
+				})
+			);
+			commonUserCredentials = response.body as TUserCredentials;
+		}
+		commonUserLogin = {
+			email: 'testing@gmail.com',
+			password: 'test_pass',
+		};
+		await login(commonUserLogin);
+		_server.close(() => {
+			client.checkout('/admin/auth');
+		});
+	});
+
+	it('Should update the user recently created only with common user credentials', async () => {
+		const userToUpdate = {
+			id: commonUserCredentials.user.id,
+			name: 'Tester user updated',
+		};
 		const response = await client
 			.put('/')
-			.send({
-				id: userCredentials.user.id,
-				name: 'Tester user updated',
-			})
-			.set('Authorization', `Bearer ${userCredentials.token}`);
-		
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
 
-		// if (response.status === 400) {
+		expect(response.status).toBe(200);
+		expect(response.body).toEqual(
+			expect.objectContaining({
+				user: expect.objectContaining({
+					id: expect.stringMatching(commonUserCredentials.user.id),
+					name: expect.stringMatching(userToUpdate.name),
+					username: expect.anything(),
+					email: expect.anything(),
+					admin: expect.anything(),
+				}),
+			})
+		);
+	});
+
+	it('Should not update with an username that already exists', async () => {
+		const userToUpdate = {
+			username: 'tester',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error: 'Erro ao atualizar usuário. Username já está sendo utilizado',
+		});
+	});
+
+	it('Should not update with an email that already exists', async () => {
+		const userToUpdate = {
+			email: 'testing@gmail.com',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error: 'Erro ao atualizar usuário. Email já está sendo utilizado',
+		});
+	});
+	it('Should not update with an email with wrong email format', async () => {
+		const userToUpdate = {
+			email: 'testing@com',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error: 'Erro ao atualizar usuário. Formato de email inválido.',
+		});
+	});
+
+	it('Should not be able to update username with a wrong format', async () => {
+		const userToUpdate = {
+			username: '(*& &!&user',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				'Erro ao atualizar usuário. O formato do apelido de usuário é inválido.',
+		});
+	});
+
+	it('Should not be able to update password with a password without the mininum size of characteres', async () => {
+		const userToUpdate = {
+			password: '123',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				'Erro ao atualizar usuário. Tamanho mínimo do campo de senha é 8 caracteres',
+		});
+	});
+	it('Should not be able to update password with a weak password format', async () => {
+		const userToUpdate = {
+			password: 'password123',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(400);
+		expect(response.body).toEqual({
+			error:
+				'Erro ao atualizar usuário. A Senha deve conter pelo menos uma letra maiúscula',
+		});
+	});
+
+	it('Should update username and email properly', async () => {
+		const userToUpdate = {
+			username: 'Tester_2022',
+			email: 'testing_2022@gmail.com',
+		};
+		const response = await client
+			.put('/')
+			.send(userToUpdate)
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		if (response.status === 400) {
+			expect(response.body).toEqual({
+				error: 'Erro ao atualizar usuário. Email já está sendo utilizado',
+			});
+		} else {
 			expect(response.status).toBe(200);
-		// 	expect(response.body).toEqual({error: 'Erro ao criar usuário. Usuário já existe'})
-		// } else {
-		// 	expect(response.status).toBe(201);
-		// }
+			expect(response.body).toEqual(
+				expect.objectContaining({
+					user: expect.objectContaining({
+						id: expect.anything(),
+						name: expect.anything(),
+						username: expect.stringMatching(userToUpdate.username),
+						email: expect.stringMatching(userToUpdate.email),
+						admin: expect.anything(),
+					}),
+				})
+			);
+		}
+	});
+
+	it('Should delete user properly', async () => {
+		const response = await client
+			.delete('/')
+			.set('Authorization', `Bearer ${commonUserCredentials.token}`);
+
+		expect(response.status).toBe(200);
+		expect(response.body).toEqual({ message: 'Usuário deletado com sucesso' });
 	});
 });

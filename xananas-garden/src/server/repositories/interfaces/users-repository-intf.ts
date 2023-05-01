@@ -36,7 +36,11 @@ export interface IUsersRepository {
 	findByEmail: (email: string) => Promise<IUsersData>;
 	findByUsername: (username: string) => Promise<IUsersData>;
 	findByEmailOrUsername: (emailOrUsername: string) => Promise<IUserAuthData>;
-	updateOne: (id: string, data: IUsersUpdateData) => Promise<Partial<IUserAuthData>>;
+	updateOne: (
+		id: string,
+		data: IUsersUpdateData
+	) => Promise<Partial<IUserAuthData>>;
 	updatePassword: (id: string, password: string) => Promise<boolean>;
 	hasUsers: () => Promise<boolean>;
+	deleteOne: (id: string) => Promise<boolean>;
 }

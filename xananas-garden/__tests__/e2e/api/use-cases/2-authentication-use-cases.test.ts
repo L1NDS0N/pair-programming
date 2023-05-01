@@ -108,7 +108,7 @@ describe('Api tests suite for authentication', () => {
 		const response = await client
 			.post('/')
 			.send({ email: 'LiNdSoN@gMaIl.CoM', password: 'password' });
-
+		
 		expect(response.status).toBe(200);
 		expect(response.body.user.userSecret).not.toBeDefined();
 		expect(response.body.user.password).not.toBeDefined();

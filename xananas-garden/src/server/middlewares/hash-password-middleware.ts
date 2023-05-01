@@ -5,7 +5,7 @@ export const hashPasswordMiddleware: Middleware = async (req, res, next) => {
 	const { password } = req.body;
 	if (password) {
 		const hashedPassword = await bcrypt.hash(password, 10);
-		req.body.password = hashedPassword;
+		req.body.hashedPassword = hashedPassword;
 	}
 	next();
 };

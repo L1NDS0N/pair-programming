@@ -102,20 +102,19 @@ export class PrismaUsersRepository implements IUsersRepository {
 		id: string,
 		data: IUsersUpdateData
 	): Promise<Partial<IUserAuthData>> {
-		const dataUpdated = await Prisma.new()
-			.user.update({
-				select: {
-					id: true,
-					name: true,
-					email: true,
-					username: true,
-					admin: true,
-				},
-				where: {
-					id: id
-				},
-				data: data,
-			});		
+		const dataUpdated = await Prisma.new().user.update({
+			select: {
+				id: true,
+				name: true,
+				email: true,
+				username: true,
+				admin: true,
+			},
+			where: {
+				id: id,
+			},
+			data: data,
+		});
 
 		return dataUpdated;
 	}
@@ -130,6 +129,15 @@ export class PrismaUsersRepository implements IUsersRepository {
 					password,
 				},
 			});
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
+	async deleteOne(id: string): Promise<boolean> {
+		try {
+			await Prisma.new().user.delete({ where: { id } });
 			return true;
 		} catch (error) {
 			return false;
