@@ -7,12 +7,16 @@ import { useForm } from 'react-hook-form';
 import z from 'zod';
 import Logo from '../../../assets/Logo';
 import { apiV1 } from '@/app/lib/axios';
+import { useXToast } from '@/components/XToast';
 
 const loginAdminUserSchema = z.object({
 	username: z
 		.string()
 		.min(8, 'O apelido de usuário precisa de pelo menos 8 caracteres')
-		.max(40, 'O apelido ou e-mail de usuário não pode ter mais do que 40 caracteres')
+		.max(
+			40,
+			'O apelido ou e-mail de usuário não pode ter mais do que 40 caracteres'
+		)
 		.nonempty('O campo de usuário é obrigatório'),
 	password: z
 		.string()
@@ -23,6 +27,7 @@ const loginAdminUserSchema = z.object({
 type TLoginUserAdmin = z.infer<typeof loginAdminUserSchema>;
 
 export default function Login() {
+	const { showToast, XToast } = useXToast();
 	const {
 		register,
 		handleSubmit,
@@ -37,14 +42,21 @@ export default function Login() {
 				password: data.password,
 			})
 			.then(res => {
-				console.log(res);
+				sessionStorage.setItem('@xg:user', JSON.stringify(res.data));
+			})
+			.catch(err => {
+				console.log(err.data.message);
 			});
+	}
+	function teste() {
+		showToast();
 	}
 	return (
 		<>
 			<Head>
 				<title>Login - Autentique-se no sistema</title>
 			</Head>
+			<XToast />
 
 			<main className='flex flex-col h-screen items-center justify-center bg-zinc-100'>
 				<section className='flex flex-1 w-[26rem] min-h-80 max-h-96 bg-white rounded-lg shadow-sm'>
@@ -90,6 +102,12 @@ export default function Login() {
 								type='submit'
 							/>
 						</form>
+							<XButton
+								xType='Primary'
+								xTitle='Entrar'
+								type='submit'
+								onClick={() => teste()}
+							/>
 					</div>
 				</section>
 			</main>
