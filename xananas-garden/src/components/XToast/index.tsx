@@ -2,7 +2,7 @@ import * as Toast from "@radix-ui/react-toast";
 import { XCircle } from "lucide-react";
 import * as React from "react";
 
-type XToastProps = {
+export type XToastProps = {
   title?: string;
   description: string;
   undoAction?: () => void;
@@ -36,7 +36,7 @@ export const useXToast = () => {
       <Toast.Provider swipeDirection="right">
         <Toast.Root
           className={
-            "grid grid-cols-[auto_max-content] items-center gap-x-[15px] rounded-md bg-white p-[15px]" +
+            "z-[99999] grid grid-cols-[auto_max-content] items-center gap-x-[15px] rounded-md bg-white p-[15px]" +
             " shadow-[hsl(206_22%_7%_/_35%)_0px_10px_38px_-10px,_hsl(206_22%_7%_/_20%)_0px_10px_20px_-15px] " +
             "[grid-template-areas:_'title_action'_'description_action'] data-[swipe=cancel]:translate-x-0 " +
             "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[state=closed]:animate-hide " +
@@ -86,7 +86,7 @@ export const useXToast = () => {
         </Toast.Root>
         <Toast.Viewport
           className={
-            "fixed bottom-0 right-0 z-[2147483647] m-0 flex w-[390px] max-w-[100vw] " +
+            "fixed bottom-0 right-0 z-10 m-0 flex w-[390px] max-w-[100vw] " +
             "list-none flex-col gap-[10px] p-[var(--viewport-padding)] outline-none [--viewport-padding:_25px]"
           }
         />

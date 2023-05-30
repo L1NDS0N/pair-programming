@@ -3,8 +3,9 @@ import Head from "next/head";
 
 import { apiV1 } from "@/app/lib/axios";
 import { XButton } from "@/components/XButton";
-import { useXToast } from "@/components/XToast";
+import { XToastContext } from "@/contexts/XToastContext";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useContext } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import Logo from "../../../assets/Logo";
@@ -27,7 +28,7 @@ const loginAdminUserSchema = z.object({
 type TLoginUserAdmin = z.infer<typeof loginAdminUserSchema>;
 
 export default function Login() {
-  const { showXToast, XToast } = useXToast();
+  const { showXToast } = useContext(XToastContext);
   const {
     register,
     handleSubmit,
@@ -45,22 +46,17 @@ export default function Login() {
         sessionStorage.setItem("@xg:user", JSON.stringify(res.data));
       })
       .catch((err) => {
-        console.log(err.data.message);
+        showXToast({
+          description: err.data.message,
+          title: "Erro no login",
+        });
       });
-  }
-  function teste() {
-    showXToast({
-      description: "Teste",
-      title: "Vixe",
-      undoAction: () => console.log("undo"),
-    });
   }
   return (
     <>
       <Head>
         <title>Login - Autentique-se no sistema</title>
       </Head>
-      <XToast />
 
       <main className="flex h-screen flex-col items-center justify-center bg-zinc-100">
         <section className="min-h-80 flex max-h-96 w-[26rem] flex-1 rounded-lg bg-white shadow-sm">
@@ -102,7 +98,9 @@ export default function Login() {
               xType="Primary"
               xTitle="Entrar"
               type="submit"
-              onClick={() => teste()}
+              onClick={() =>
+                showXToast({ description: "Teste", title: "teste" })
+              }
             />
           </div>
         </section>
