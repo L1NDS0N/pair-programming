@@ -94,14 +94,6 @@ export default function Login() {
               )}
               <XButton xType="Primary" xTitle="Entrar" type="submit" />
             </form>
-            <XButton
-              xType="Primary"
-              xTitle="Entrar"
-              type="submit"
-              onClick={() =>
-                showXToast({ description: "Teste", title: "teste" })
-              }
-            />
           </div>
         </section>
       </main>

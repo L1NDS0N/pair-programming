@@ -1,6 +1,7 @@
 import * as Toast from "@radix-ui/react-toast";
 import { XCircle } from "lucide-react";
 import * as React from "react";
+import XIcon, { IXIconProps } from "../XIcon";
 
 export type XToastProps = {
   type?: "info" | "success" | "alert" | "warning";
@@ -13,6 +14,8 @@ type ToastStyle = {
   rootStyle: string;
   titleStyle: string;
   descriptionStyle: string;
+  actionStyle: string;
+  ToastIcon: IXIconProps;
 };
 
 export const useXToast = () => {
@@ -29,6 +32,9 @@ export const useXToast = () => {
         rootStyle: "bg-zinc-50 ",
         titleStyle: "text-zinc-900 ",
         descriptionStyle: "text-zinc-700 ",
+        actionStyle:
+          "bg-rose-100 text-rose-900 shadow-rose-500 hover:shadow-rose-700 focus:shadow-rose-700",
+        ToastIcon: { name: "Info", tailwindColor: "text-zinc-900", size: 20 },
       };
       break;
 
@@ -37,17 +43,29 @@ export const useXToast = () => {
         rootStyle: "bg-red-100",
         titleStyle: "text-red-900 ",
         descriptionStyle: "text-red-700 ",
+        actionStyle:
+          "bg-red-100 text-red-900 shadow-red-500 hover:shadow-red-700 focus:shadow-red-700",
+        ToastIcon: {
+          name: "XOctagon",
+          tailwindColor: "text-red-700",
+          size: 20,
+        },
       };
-
       break;
 
     case "success":
       toastByType = {
         rootStyle: "bg-green-100 ",
-        titleStyle: "text-zinc-900 ",
-        descriptionStyle: "text-zinc-700 ",
+        titleStyle: "text-green-900 ",
+        descriptionStyle: "text-green-700 ",
+        actionStyle:
+          "bg-green-100 text-green-900 shadow-green-500 hover:shadow-green-700 focus:shadow-green-700",
+        ToastIcon: {
+          name: "CheckCheck",
+          tailwindColor: "text-green-700",
+          size: 20,
+        },
       };
-
       break;
 
     case "warning":
@@ -55,10 +73,16 @@ export const useXToast = () => {
         rootStyle: "bg-yellow-100 ",
         titleStyle: "text-orange-900 ",
         descriptionStyle: "text-orange-700 ",
+        actionStyle:
+          "bg-yellow-100 text-orange-900 shadow-orange-500 hover:shadow-orange-700 focus:shadow-orange-700",
+        ToastIcon: {
+          name: "AlertTriangle",
+          tailwindColor: "text-zinc-700",
+          size: 20,
+        },
       };
       break;
   }
-
   React.useEffect(() => {
     return () => clearTimeout(timerRef.current);
   }, []);
@@ -98,7 +122,10 @@ export const useXToast = () => {
               "mb-[5px] text-[15px] font-medium [grid-area:_title]"
             }
           >
-            {props.title}
+            <div className="flex flex-row gap-2">
+              <XIcon {...toastByType.ToastIcon} />
+              <span>{props.title}</span>
+            </div>
           </Toast.Title>
           <Toast.Description asChild>
             <div
@@ -120,9 +147,10 @@ export const useXToast = () => {
               <button
                 onClick={undoAction}
                 className={
-                  "inline-flex h-[25px] items-center justify-center rounded bg-green-100 px-[10px]" +
-                  " text-xs font-medium leading-[25px] text-green-900 shadow-[inset_0_0_0_1px] " +
-                  " shadow-green-500 hover:shadow-[inset_0_0_0_1px] hover:shadow-green-700 focus:shadow-[0_0_0_2px] focus:shadow-green-700"
+                  toastByType.actionStyle +
+                  " inline-flex h-[25px] items-center justify-center rounded  px-[10px] " +
+                  " text-xs font-medium leading-[25px] shadow-[inset_0_0_0_1px] " +
+                  " hover:shadow-[inset_0_0_0_1px]  focus:shadow-[0_0_0_2px] "
                 }
               >
                 Desfazer
